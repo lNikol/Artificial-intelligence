@@ -8,11 +8,22 @@ from data import *
 def initial_population(individual_size, population_size):
     return [[random.choice([True, False]) for _ in range(individual_size)] for _ in range(population_size)]
 
+# Pamięć podręczna dla fitness
+fitness_cache = {}
+
 def fitness(items, knapsack_max_capacity, individual):
+    individual_tuple = tuple(individual)  # Convert list to tuple exp. [True, False] -> (True, False)
+    if individual_tuple in fitness_cache:
+        return fitness_cache[individual_tuple]
+    
     total_weight = sum(compress(items['Weight'], individual))
     if total_weight > knapsack_max_capacity:
-        return 0
-    return sum(compress(items['Value'], individual))
+        fitness_value = 0
+    else:
+        fitness_value = sum(compress(items['Value'], individual))
+    
+    fitness_cache[individual_tuple] = fitness_value  # Zapisz w pamięci podręcznej
+    return fitness_value
 
 def population_best(items, knapsack_max_capacity, population):
     best_individual = None
@@ -33,22 +44,19 @@ def sorted_population_fitnesses(items, knapsack_max_capacity, population):
 
 
 def select_elite(population, items, knapsack_max_capacity, n_elite):
-    # Posortuj populację według fitness (malejąco)
     sorted_population = sorted(population, key=lambda x: fitness(items, knapsack_max_capacity, x), reverse=True)
-    # Wybierz n_elite najlepszych osobników
     elite = sorted_population[:n_elite]
     return elite
 
 
-# select_parents 
 def roulette(population, items, knapsack_max_capacity, n_selection):
-    population_fitnesses = sorted_population_fitnesses(items, knapsack_max_capacity, population)
+    population_fitnesses = [fitness(items, knapsack_max_capacity, individual) for individual in population]
     total_fitness = sum(population_fitnesses)
-    population_probabilities = []
     population_probabilities = [fitness / total_fitness for fitness in population_fitnesses]
-    parent_indices = random.choices(range(len(population)), weights=population_probabilities, k=n_selection)
+    
     # Parent selection by probability, selection of first n_selection elements
     # in parents arrays of True/False values
+    parent_indices = random.choices(range(len(population)), weights=population_probabilities, k=n_selection)
     parents = [population[i] for i in parent_indices]
     return parents
 
@@ -59,11 +67,9 @@ def tournament_pairing(parents, items, knapsack_max_capacity, tournament_size=2)
         # Select first parent
         candidates1 = random.sample(parents, tournament_size)
         parent1 = max(candidates1, key=lambda x: fitness(items, knapsack_max_capacity, x))
-        
         # Select second parent
         candidates2 = random.sample(parents, tournament_size)
         parent2 = max(candidates2, key=lambda x: fitness(items, knapsack_max_capacity, x))
-        
         pairs.append((parent1, parent2))
     return pairs
 
@@ -73,13 +79,14 @@ def xover(parent1, parent2):
     child1 = []
     child2 = []
     for i in range(len(parent1)):
-        if random.random() < 0.5: 
+        if random.random() < 0.5:
             child1.append(parent1[i])
             child2.append(parent2[i])
         else:
             child1.append(parent2[i])
             child2.append(parent1[i])
     return child1, child2
+
 
 # uniform crossover
 def crossover(parents, items, knapsack_max_capacity, population_size):
@@ -92,16 +99,17 @@ def crossover(parents, items, knapsack_max_capacity, population_size):
 
 
 # Changing True/False on False/True with probability mutation_rate (in %)
-def mutate_individual(individual, mutation_rate):
+def mutate_individual(individual, mutation_rate=0.05):
     for i in range(len(individual)):
         if random.random() < mutation_rate:
-            individual[i] = not individual[i] 
+            individual[i] = not individual[i]
     return individual
+
 
 def mutate(population, mutation_rate=0.05):
     return [mutate_individual(individual, mutation_rate) for individual in population]
 
-items, knapsack_max_capacity = get_small()
+items, knapsack_max_capacity = get_big()
 print(items)
 
 population_size = 100
@@ -117,6 +125,7 @@ best_history = []
 population = initial_population(len(items), population_size)
 
 for _ in range(generations):
+    fitness_cache.clear()  # Wyczyść pamięć podręczną na początku każdej generacji
     population_history.append(population)
 
     elite = select_elite(population, items, knapsack_max_capacity, n_elite)
@@ -129,16 +138,13 @@ for _ in range(generations):
 
     # Adding elite on the beggining of population
     # and adding mutated_offspring after elite in this population
-    population = elite + mutated_offspring  
+    population = elite + mutated_offspring
 
-    # Aktualizacja najlepszego rozwiązania
     best_individual, best_individual_fitness = population_best(items, knapsack_max_capacity, population)
     if best_individual_fitness > best_fitness:
         best_solution = best_individual
         best_fitness = best_individual_fitness
     best_history.append(best_fitness)
-
-
 
 end_time = time.time()
 total_time = end_time - start_time
@@ -153,9 +159,6 @@ top_best = 10
 for i, population in enumerate(population_history):
     plotted_individuals = min(len(population), top_best)
     x.extend([i] * plotted_individuals)
-    # this line: [fitness(items, knapsack_max_capacity, individual) for individual in population]
-    # adds to population_fitnesses in place by id [population_fitnesses] value from fitness()
-    # extends population_fitnesses with fitness() values
     population_fitnesses = sorted_population_fitnesses(items, knapsack_max_capacity, population)
     y.extend(population_fitnesses[:plotted_individuals])
 plt.scatter(x, y, marker='.')
