@@ -22,6 +22,12 @@ x_train = train_data['Weight'].to_numpy()
 y_test = test_data['MPG'].to_numpy()
 x_test = test_data['Weight'].to_numpy()
 
+x_train_mean = np.mean(x_train)
+y_train_mean = np.mean(y_train)
+
+x_train_std2 = np.std(x_train)
+y_train_std2 = np.std(y_train)
+
 # TODO: calculate closed-form solution
 # Reshape data to column vectors
 x_train = x_train.reshape(-1, 1)
@@ -67,6 +73,9 @@ def standardize(x, m=None, s=None):
         s = np.std(x)
     return (x - m) / s
 
+def destandardize(x, mean, std):
+    return x * std + mean
+
 # Standardize training data
 x_train_std = standardize(x_train)
 y_train_std = standardize(y_train)
@@ -91,14 +100,22 @@ for epoch in range(1000):  # Number of iterations
     if epoch % 100 == 0:  # Print MSE every 100 epochs
         print(f"Epoch {epoch}: MSE = {mse(y_train_pred_std, y_train_std)}")
 
+theta_best = theta
+
 # Predictions on standardized test data
 y_test_pred_std = X_test_std @ theta
+
+# Destandardize predictions
+y_test_pred_destd = destandardize(y_test_pred_std, y_train_mean, y_train_std2)
 
 # TODO: calculate error
 mse_train_std = mse(y_train_pred_std, y_train_std)
 mse_test_std = mse(y_test_pred_std, y_test_std)
+mse_test_destd = mse(y_test_pred_destd, y_test)
 
-print(f"Gradient Descent: {mse_train_std=}, {mse_test_std=}")
+print(f"Gradient Descent (standardized): {mse_train_std=}, {mse_test_std=}")
+print(f"Gradient Descent (destandardized): {mse_test_destd=}")
+
 
 # plot the regression line for standardized data
 x_std = np.linspace(min(x_test_std), max(x_test_std), 100)

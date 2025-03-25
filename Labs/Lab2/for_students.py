@@ -90,12 +90,14 @@ def xover(parent1, parent2):
 
 # uniform crossover
 def crossover(parents, items, knapsack_max_capacity, population_size):
+    # ma być len(crossover) = population_size//2
+    # rodzice maja byc zastapioni przez swoje dzieci
     pairs = tournament_pairing(parents, items, knapsack_max_capacity)
     offspring = []
     for parent1, parent2 in pairs:
         child1, child2 = xover(parent1, parent2)
         offspring.extend([child1, child2])
-    return offspring[:population_size]
+    return offspring[:population_size//2]
 
 
 # Changing True/False on False/True with probability mutation_rate (in %)
@@ -106,16 +108,19 @@ def mutate_individual(individual, mutation_rate=0.05):
     return individual
 
 
-def mutate(population, mutation_rate=0.05):
-    return [mutate_individual(individual, mutation_rate) for individual in population]
+def mutate(offspring, mutation_rate=0.05):
+    return [mutate_individual(individual, mutation_rate) for individual in offspring]
 
 items, knapsack_max_capacity = get_big()
 print(items)
 
 population_size = 100
 generations = 200
-n_selection = 20
+n_selection = population_size
 n_elite = 1
+
+mutation_rate = 1.0/len(items)
+
 
 start_time = time.time()
 best_solution = None
@@ -125,21 +130,22 @@ best_history = []
 population = initial_population(len(items), population_size)
 
 for _ in range(generations):
-    fitness_cache.clear()  # Wyczyść pamięć podręczną na początku każdej generacji
+    fitness_cache.clear()
     population_history.append(population)
 
+    # elite ma byc pobierany przed mutacja
     elite = select_elite(population, items, knapsack_max_capacity, n_elite)
 
     parents = roulette(population, items, knapsack_max_capacity, n_selection)
 
     offspring = crossover(parents, items, knapsack_max_capacity, population_size - n_elite)
 
-    mutated_offspring = mutate(offspring)
+    mutated_offspring = mutate(offspring, mutation_rate)
+
 
     # Adding elite on the beggining of population
     # and adding mutated_offspring after elite in this population
     population = elite + mutated_offspring
-
     best_individual, best_individual_fitness = population_best(items, knapsack_max_capacity, population)
     if best_individual_fitness > best_fitness:
         best_solution = best_individual
