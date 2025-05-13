@@ -2,6 +2,9 @@ from k_means import k_means
 import pandas as pd
 import numpy as np
 
+# Nikolai Lavrinov, 3B
+# 201302
+
 def load_iris():
     data = pd.read_csv("data/iris.data", names=["sepal_length", "sepal_width", "petal_length", "petal_width", "class"])
     print(data)
@@ -28,5 +31,5 @@ def clustering(kmeans_pp):
     print(f"Mean intra-class variance: {np.mean(intra_class_variance)}")
 
 if __name__=="__main__":
-    clustering(kmeans_pp = False)
+    clustering(kmeans_pp = True)
     # clustering(kmeans_pp = False)
