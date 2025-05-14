@@ -84,7 +84,7 @@ def zad2_two_layer_net(student_id):
     # TODO: warstwy mozna składać w wiekszy model
     class SimpleTwoLayerNetwork:
         def __init__(self, n_in, n_hidden, n_out):
-            self.hidden_layer = DenseLayer(n_in, n_hidden, relu)
+            self.hidden_layer = DenseLayer(n_in, n_hidden, hardlim)
             self.output_layer = DenseLayer(n_in, n_out, hardlim)
 
         def forward(self, x_data):
@@ -100,11 +100,11 @@ def zad2_two_layer_net(student_id):
     # model.output_layer.W[:, 0] = None      # wagi neuronu wyjściowego
     # model.output_layer.b[:] = None         # bias neuronu wyjściowego
 
-    model.hidden_layer.W[:, 0] = [-0.3, 1]
-    model.hidden_layer.W[:, 1] = [0.3, -1]
-    model.hidden_layer.b[:] = [-0.27, 0.5]
-    model.output_layer.W[:, 0] = [1, 1]
-    model.output_layer.b[:] = [-0.5]
+    model.hidden_layer.W[:, 0] = [1.25, -3.75]      # wagi neuronu h1
+    model.hidden_layer.W[:, 1] = [-0.5, 1.35]      # wagi neuronu h2
+    model.hidden_layer.b[:] = [0.1, -0.9]    # biasy neuronów h1 i h2
+    model.output_layer.W[:, 0] = [1, 1]      # wagi neuronu wyjściowego
+    model.output_layer.b[:] = -0.5         # bias neuronu wyjścioweg
 
     # działanie i ocena modelu
     y_pred = model.forward(x)
